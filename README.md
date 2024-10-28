@@ -258,6 +258,7 @@ def to_byte_matrix(value):
         [(value >> 8) & 0x0F, (value >> 0) & 0x0F]
     ]
 ```
+***
 **实现加密算法**
 ```python 
 def encrypt(plaintext, key1, key2, key3):
@@ -282,7 +283,9 @@ def encrypt(plaintext, key1, key2, key3):
 
     return final_result
 ```
-实现解密算法
+***
+**实现解密算法**
+```python 
 def decrypt(ciphertext, key1, key2, key3):
     """解密"""
 
@@ -305,11 +308,13 @@ def decrypt(ciphertext, key1, key2, key3):
     final_result = binary_value ^ key1
 
     return final_result
-2.扩展功能实现
-2.1ASCII加密(ASCII.py)
-简介：考虑到向实用性扩展，加密算法的数据输入可以是ASII编码字符串(分组为2 Bytes)，对应地输出也可以是ACII字符串(很可能是乱码)。
-主要功能：对ASCII字符串进行加解密
-实现代码（加密算法）：
+```
+### 2.扩展功能实现
+#### 2.1ASCII加密(ASCII.py)
+**简介：** 考虑到向实用性扩展，加密算法的数据输入可以是ASII编码字符串(分组为2 Bytes)，对应地输出也可以是ACII字符串(很可能是乱码)。
+**主要功能：** 对ASCII字符串进行加解密
+**实现代码（加密算法）：**
+```python 
 def encrypt_text(plaintext, key1, key2, key3):
     """使用提供的密钥和区块密码加密文本字符串，并以ASCII字符输出。"""
     encrypted_text = ""
@@ -324,11 +329,34 @@ def encrypt_text(plaintext, key1, key2, key3):
         # 以字符形式附加
         encrypted_text += chr(high_byte) + chr(low_byte)
     return encrypted_text
+```
+#### 2.2双重加密算法(double.py)
+**简介：** 将S-AES算法通过双重加密进行扩展，分组长度仍然是16 bits，但密钥长度为32 bits。
+**主要功能：** 使用长度为32bits的密钥对明文进行加密
+**实现代码（加密算法）：**
+```python 
+def double_encrypt(plaintext, key_32bit):
+    # 将32位密钥分成两个16位密钥
+    key_A = (key_32bit & 0xFFFF0000) >> 16
+    key_B = key_32bit & 0x0000FFFF
 
-2.2双重加密算法(double.py)
-简介：将S-AES算法通过双重加密进行扩展，分组长度仍然是16 bits，但密钥长度为32 bits。
-主要功能：使用长度为32bits的密钥对明文进行加密
-实现代码（加密算法）：
+    # 对第一个16位密钥进行密钥扩展
+    key_A1, key_A2, key_A3 = key_expansion(key_A)
+    # 使用key_A进行第一次加密
+    intermediate_ciphertext = encrypt(plaintext, key_A1, key_A2, key_A3)
+
+    # 对第二个16位密钥进行密钥扩展
+    key_B1, key_B2, key_B3 = key_expansion(key_B)
+    # 使用key_B进行第二次加密
+    final_ciphertext = encrypt(intermediate_ciphertext, key_B1, key_B2, key_B3)
+
+    return final_ciphertext
+```
+#### 2.3三重加密算法(triple.py)
+**简介：** 将S-AES算法通过三重加密进行扩展，按照32 bits密钥Key(K1+K2)的模式进行三重加密解密。
+**主要功能：** 将32bits的密钥分为k1，k2，按照k1,k2,k1的顺序对明文进行加密
+**实现代码（加密算法）：**
+```python 
 def double_encrypt(plaintext, key_32bit):
     # 将32位密钥分成两个16位密钥
     key_A = (key_32bit & 0xFFFF0000) >> 16
@@ -346,32 +374,12 @@ def double_encrypt(plaintext, key_32bit):
 
     return final_ciphertext
 
-2.3三重加密算法(triple.py)
-简介：将S-AES算法通过三重加密进行扩展，按照32 bits密钥Key(K1+K2)的模式进行三重加密解密。
-主要功能：将32bits的密钥分为k1，k2，按照k1,k2,k1的顺序对明文进行加密
-实现代码（加密算法）：
-def double_encrypt(plaintext, key_32bit):
-    # 将32位密钥分成两个16位密钥
-    key_A = (key_32bit & 0xFFFF0000) >> 16
-    key_B = key_32bit & 0x0000FFFF
-
-    # 对第一个16位密钥进行密钥扩展
-    key_A1, key_A2, key_A3 = key_expansion(key_A)
-    # 使用key_A进行第一次加密
-    intermediate_ciphertext = encrypt(plaintext, key_A1, key_A2, key_A3)
-
-    # 对第二个16位密钥进行密钥扩展
-    key_B1, key_B2, key_B3 = key_expansion(key_B)
-    # 使用key_B进行第二次加密
-    final_ciphertext = encrypt(intermediate_ciphertext, key_B1, key_B2, key_B3)
-
-    return final_ciphertext
-
-
-2.4中间相遇攻击(meet-in-the-middle attack.py)
-简介：通过明密文对能找到所有可能的密钥，而通过中间相遇算法，如果给出多对明密文对，能够找到他们的共同密钥。
-功能：根据明密文对找到所有可能的密钥并能够找到多对明密文对的共同密钥。
-实现代码：
+```
+#### 2.4中间相遇攻击(meet-in-the-middle attack.py)
+**简介：** 通过明密文对能找到所有可能的密钥，而通过中间相遇算法，如果给出多对明密文对，能够找到他们的共同密钥。
+**主要功能：** 根据明密文对找到所有可能的密钥并能够找到多对明密文对的共同密钥。
+**实现代码（加密算法）：**
+```python 
 def meet_in_middle_attack(plain_text, cipher_text):
     key_length = 0xFFFF  # 16位密钥的取值范围
 
@@ -396,18 +404,19 @@ def meet_in_middle_attack(plain_text, cipher_text):
             found_keys.add((k1, k2))  # 存储找到的密钥对
 
     return found_keys
-
-2.5 CBC工作模式(CBC.py)
-简介：基于S-AES算法，生成初始向量，使用密码分组链(CBC)模式对较长的明文消息进行加密。
+```
+#### 2.5 CBC工作模式(CBC.py)
+**简介：** 基于S-AES算法，生成初始向量，使用密码分组链(CBC)模式对较长的明文消息进行加密。
 AES算法的ECB工作模式与CBC工作模式有以下不同之处
-特性	ECB（电子密码本模式）	CBC（密码块链接模式）
-加密方式	每个明文块独立加密，使用相同的密钥。	每个明文块在加密前与前一个密文块进行异或操作。
-初始化向量	不需要初始化向量（IV）。	需要一个随机的初始化向量（IV）。
-并行处理	可以并行处理多个明文块。	不能并行处理，因为每个块依赖于前一个块的结果。
-相同明文块的处理	相同的明文块会产生相同的密文块。	相同的明文块会产生不同的密文块（取决于IV和前一个密文块）。
-安全性	安全性较低，容易受到模式分析攻击。	安全性较高，能有效抵抗模式分析攻击。
-错误传播	仅影响当前块，其他块不受影响。	如果一个密文块被篡改，后续的所有块都会受到影响。
-适用场景	不推荐用于敏感数据的加密，适合对安全性要求不高的场景。	适用于大多数需要加密敏感数据的场景。
+| 特性 |	ECB（电子密码本模式） | 	CBC（密码块链接模式） |
+| :--- | :---: | ---: |
+| 加密方式 | 	每个明文块独立加密，使用相同的密钥。 |	每个明文块在加密前与前一个密文块进行异或操作。 |
+| 初始化向量 |	不需要初始化向量（IV）。 |	需要一个随机的初始化向量（IV）。|
+| 并行处理 |	可以并行处理多个明文块。 |	不能并行处理，因为每个块依赖于前一个块的结果。 |
+| 相同明文块的处理 |	相同的明文块会产生相同的密文块。 |	相同的明文块会产生不同的密文块（取决于IV和前一个密文块）。 |
+| 安全性 |	安全性较低，容易受到模式分析攻击。 |	安全性较高，能有效抵抗模式分析攻击。 | 
+| 错误传播 |	仅影响当前块，其他块不受影响。 |	如果一个密文块被篡改，后续的所有块都会受到影响。 |
+| 适用场景 |	不推荐用于敏感数据的加密，适合对安全性要求不高的场景。 |	适用于大多数需要加密敏感数据的场景。 |
 
 功能：对较长的明文消息进行加密。
 重要的类和方法：
