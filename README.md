@@ -221,37 +221,45 @@ AES加密步骤
 
 ##### 2.轮次处理（每轮包含以下步骤，通常进行10轮、12轮或14轮，具体取决于密钥长度）
 
-*[]半字节替换（apply_s_box）
+**半字节替换（apply_s_box）**
 使用S-Box对每个半字节进行非线性替换。
 
-*[]行移位（shift_row）
+**行移位（shift_row）**
 将状态矩阵的行进行循环左移，第一行不变，第二行左移1位，第三行左移2位，第四行左移3位。
 
-*[]列混淆（mix_columns）
+**列混淆（mix_columns）**
 对每一列进行线性变换，增强数据的扩散性。
 
-*[]轮密钥加
+**轮密钥加**
 将当前状态与当前轮密钥进行逐字节异或操作。
 
 ##### 3.最后轮（不进行列混合）
 
 进行一次半字节替换（apply_s_box）。
+
 行移位（shift_row）。
+
 进行最后的轮密钥加。
+
 为便于理解，我们绘制实现的流程图如下
+
 <img width="241" alt="图片25" src="https://github.com/user-attachments/assets/4256ff67-d73c-49ed-9cb3-3541019ffdf5">
 
 
-PS：解密过程与加密过程类似，但使用的是逆操作，包括逆半字节替换、逆行移位、逆列混淆和逆轮密钥加操作。
-（三）算法实现（S_AES.py)
-将16位整数转换为2x2半字节矩阵
+*PS：解密过程与加密过程类似，但使用的是逆操作，包括逆半字节替换、逆行移位、逆列混淆和逆轮密钥加操作。*
+#### （三）算法实现（S_AES.py)
+***
+**将16位整数转换为2x2半字节矩阵**
+```python 
 def to_byte_matrix(value):
     # 将16位整数转换为2x2半字节矩阵
     return [
         [(value >> 12) & 0x0F, (value >> 4) & 0x0F],
         [(value >> 8) & 0x0F, (value >> 0) & 0x0F]
     ]
-实现加密算法
+```
+**实现加密算法**
+```python 
 def encrypt(plaintext, key1, key2, key3):
     """加密"""
     # 第0轮
@@ -273,6 +281,7 @@ def encrypt(plaintext, key1, key2, key3):
     final_result = binary_final ^ key3
 
     return final_result
+```
 实现解密算法
 def decrypt(ciphertext, key1, key2, key3):
     """解密"""
